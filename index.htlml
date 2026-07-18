@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savings Goal Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .goal-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .goal-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+        .add-goal {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .add-goal:hover {
+            background: #45a049;
+        }
+        .input-group {
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Savings Goal Tracker</h1>
+    
+    <button class="add-goal" onclick="openModal()">Add New Goal</button>
+
+    <div id="goals-list"></div>
+
+    <!-- Modal for adding a new goal -->
+    <div id="addGoalModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Add New Goal</h2>
+            <div class="input-group">
+                <input type="text" id="goalName" placeholder="Goal Name" required>
+            </div>
+            <div class="input-group">
+                <input type="number" id="targetAmount" placeholder="Target Amount (£)" required>
+            </div>
+            <div class="input-group">
+                <input type="number" id="currentAmount" placeholder="Current Savings (£)" value="0">
+            </div>
+            <button class="add-goal" onclick="addGoal()">Add Goal</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let goals = [];
+
+        // Load goals from localStorage
+        if (localStorage.getItem('savingsGoals')) {
+            goals = JSON.parse(localStorage.getItem('savingsGoals'));
+        }
+
+        // Render goals
+        function renderGoals() {
+            const goalsList = document.getElementById('goals-list');
+            goalsList.innerHTML = '';
+
+            goals.forEach((goal, index) => {
+                const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
+                
+                const goalElement = document.createElement('div');
+                goalElement.className = 'goal-container';
+                goalElement.innerHTML = `
+                    <div class="goal-header">
+                        <span class="goal-name">${goal.name}</span>
+                        <span>£${goal.currentAmount} / £${goal.targetAmount}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${progressPercentage}%;"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>${progressPercentage.toFixed(1)}% complete</span>
+                        <span>£${goal.targetAmount - goal.currentAmount} left</span>
+                    </div>
+                    <button onclick="updateGoal(${index})" style="margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Update</button>
+                    <button onclick="deleteGoal(${index})" style="margin-top: 10px; padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Delete</button>
+                `;
+                goalsList.appendChild(goalElement);
+            });
+        }
+
+        // Open modal
+        function openModal() {
+            document.getElementById('addGoalModal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('addGoalModal').style.display = 'none';
+        }
+
+        // Add a new goal
+        function addGoal() {
+            const name = document.getElementById('goalName').value;
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value);
+            const currentAmount = parseFloat(document.getElementById('currentAmount').value) || 0;
+
+            if (name && targetAmount) {
+                goals.push({ name, targetAmount, currentAmount });
+                localStorage.setItem('savingsGoals', JSON.stringify(goals));
+                renderGoals();
+                closeModal();
+                document.getElementById('goalName').value = '';
+                document.getElementById('targetAmount').value = '';
+                document.getElementById('currentAmount').value = '';
+            }
+        }
+
+        // Update a goal
+        function updateGoal(index) {
+            const newCurrentAmount = prompt('Enter new current savings amount:', goals[index].currentAmount);
+            if (newCurrentAmount !== null) {
+                goals[index].currentAmount = parseFloat(newCurrentAmount) || 0;
+                localStorage.setItem('savingsGoals', JSON.stringify(goals));
+                renderGoals();
+            }
+        }
+
+        // Delete a goal
+        function deleteGoal(index) {
+            if (confirm('Are you sure you want to delete this goal?')) {
+                goals.splice(index, 1);
+                localStorage.setItem('savingsGoals', JSON.stringify(goals));
+                renderGoals();
+            }
+        }
+
+        // Initial render
+        renderGoals();
+    </script>
+</body>
+</html>
